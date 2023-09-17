@@ -12,10 +12,12 @@ def parse_args():
     # checkpoint and log
     parser.add_argument('--resume', type=str, default=None,
                         help='put the path to resuming file if needed')
-    parser.add_argument('--log-iter', type=int, default=10,
+    parser.add_argument('--log-iter', type=int, default=20,
                         help='print log every log-iter')
+    parser.add_argument('--save-epoch', type=int, default=5,
+                        help='save checkpoint every save-epoch')
     # for evaluation
-    parser.add_argument('--val-epoch', type=int, default=1,
+    parser.add_argument('--val-epoch', type=int, default=5,
                         help='run validation every val-epoch')
     parser.add_argument('--skip-val', action='store_true', default=False,
                         help='skip validation during training')

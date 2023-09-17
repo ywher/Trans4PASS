@@ -98,9 +98,10 @@ def _get_city_pairs(folder, split='train'):
                 if filename.endswith('.png'):
                     imgpath = os.path.join(root, filename)
                     foldername = os.path.basename(os.path.dirname(imgpath))
-                    # maskname = filename.replace('_.png', '_labelTrainIds.png')
-                    maskname = filename.replace('.png', '_labelTrainIds.png')
-                    maskpath = os.path.join(mask_folder, foldername, maskname)
+                    maskname = filename.replace('_.png', '_labelTrainIds.png')
+                    # maskname = filename.replace('.png', '_labelTrainIds.png')
+                    # maskpath = os.path.join(mask_folder, foldername, maskname)
+                    maskpath = os.path.join(mask_folder, maskname)
                     if os.path.isfile(imgpath) and os.path.isfile(maskpath):
                         img_paths.append(imgpath)
                         mask_paths.append(maskpath)
