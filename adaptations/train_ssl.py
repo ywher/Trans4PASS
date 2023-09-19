@@ -12,6 +12,7 @@ import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 import logging, sys
 import time
+import datetime
 from tensorboardX import SummaryWriter
 from model.trans4pass import Trans4PASS_v1, Trans4PASS_v2
 from model.discriminator import FCDiscriminator
@@ -28,7 +29,7 @@ from compute_iou import fast_hist, per_class_iu
 
 IMG_MEAN = np.array((104.00698793, 116.66876762, 122.67891434), dtype=np.float32)
 
-MODEL = 'Trans4PASS_v1'
+MODEL = 'Trans4PASS_v2' #Trans4PASS_v1
 EMB_CHANS = 128
 BATCH_SIZE = 2
 ITER_SIZE = 1
@@ -50,13 +51,14 @@ LEARNING_RATE = 2.5e-6
 MOMENTUM = 0.9
 NUM_CLASSES = 19
 NUM_STEPS = 100000
-NUM_STEPS_STOP = 80000 # early stopping
+NUM_STEPS_STOP = 100000 # early stopping
 NUM_PROTOTYPE = 50
 POWER = 0.9
 RANDOM_SEED = 1234
-RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v1_WarmUp/BestCS2DensePASS_G.pth'
+RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v2_WarmUp/BestCS2DensePASS_13000iter_53.55miou.pth'
+# RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v1_WarmUp/BestCS2DensePASS_G.pth'
 SAVE_NUM_IMAGES = 2
-SAVE_PRED_EVERY = 100
+SAVE_PRED_EVERY = 200
 DIR_NAME = '{}2{}_{}_SSL/'.format(SOURCE_NAME, TARGET_NAME, MODEL)
 SNAPSHOT_DIR = './snapshots/' + DIR_NAME
 WEIGHT_DECAY = 0.0005
@@ -366,6 +368,7 @@ def main():
 
 
     # start training
+    start_time = time.time()
     for i_iter in range(Iter, args.num_steps):
 
         loss_seg_value = 0
@@ -459,9 +462,11 @@ def main():
             if i_iter % 10 == 0:
                 for key, val in scalar_info.items():
                     writer.add_scalar(key, val, i_iter)
-        if i_iter % 10 == 0:
-            logging.info('iter={0:8d}/{1:8d}, l_seg={2:.3f}, l_seg_t={5:.3f}, l_adv={3:.3f} l_D={4:.3f}'.format(
-                  i_iter, args.num_steps, loss_seg_value, loss_adv_target_value, loss_D_value, loss_seg_value_t))
+        if i_iter % 20 == 0:
+            eta_time = ((time.time() - start_time) / (i_iter + 1)) * (args.num_steps - i_iter - 1)
+            eta_str = str(datetime.timedelta(seconds=int(eta_time)))
+            logging.info('iter={0:8d}/{1:8d}, l_seg={2:.3f}, l_seg_t={5:.3f}, l_adv={3:.3f}, l_D={4:.3f}, eta={6}'.format(
+                  i_iter, args.num_steps, loss_seg_value, loss_adv_target_value, loss_D_value, loss_seg_value_t, eta_str))
 
         if i_iter >= args.num_steps_stop - 1:
             logging.info('save model ...')

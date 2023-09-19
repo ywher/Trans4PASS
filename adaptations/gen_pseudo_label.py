@@ -3,6 +3,8 @@ import scipy
 from scipy import ndimage
 import numpy as np
 import sys
+import datetime
+import time
 
 import torch
 from torch.autograd import Variable
@@ -14,6 +16,7 @@ from dataset.densepass_dataset import densepassDataSet, densepassTestDataSet
 from collections import OrderedDict
 import os
 from PIL import Image
+import tqdm
 
 import torch.nn as nn
 IMG_MEAN = np.array((104.00698793,116.66876762,122.67891434), dtype=np.float32)
@@ -26,8 +29,9 @@ IGNORE_LABEL = 255
 NUM_CLASSES = 19
 BATCH_SIZE = 1
 NUM_WORKERS = 0
-MODEL = 'Trans4PASS_v1'
-RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v1_WarmUp/BestCS2DensePASS_G.pth'
+MODEL = 'Trans4PASS_v2'
+# RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v1_WarmUp_old/BestCS2DensePASS_G.pth'
+RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v2_WarmUp/BestCS2DensePASS_13000iter_53.55miou.pth'
 SET = 'train'
 SAVE_PATH = './pseudo_{}_{}_ms'.format(TARGET_NAME, MODEL)
 
@@ -101,13 +105,16 @@ def main():
     targetset = densepassDataSet(args.data_dir, args.data_list, crop_size=(2048,400), set=args.set)
     testloader = data.DataLoader(targetset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=False)
     interp = nn.Upsample(size=(400, 2048), mode='bilinear', align_corners=True)
-    predicted_label = np.zeros((len(targetset), 400, 2048), dtype=np.int8)
+    predicted_label = np.zeros((len(targetset), 400, 2048), dtype=np.uint8)
     predicted_prob = np.zeros((len(targetset), 400, 2048), dtype=np.float16)
     image_name = []
 
+    start_time = time.time()
     for index, batch in enumerate(testloader):
         if index % 10 == 0:
-            print('{}/{} processed'.format(index, len(testloader)))
+            eta_time = ((time.time() - start_time) / (index + 1)) * (len(testloader) - index - 1)
+            eta_str = str(datetime.timedelta(seconds=int(eta_time)))
+            print('{}/{} processed, eta{}'.format(index, len(testloader), eta_str))
 
         image, _, name = batch
         image_name.append(name[0])
@@ -136,24 +143,28 @@ def main():
             thres.append(0)
             continue        
         x = np.sort(x)
-        thres.append(x[np.int(np.round(len(x)*0.5))])
+        thres.append(x[int(np.round(len(x)*0.5))])
     print(thres)
     thres = np.array(thres)
     thres[thres>0.9]=0.9
     print(thres)
+    bar = tqdm.tqdm(total=len(targetset)//BATCH_SIZE)
     for index in range(len(targetset)//BATCH_SIZE):
         name = image_name[index]
         label = predicted_label[index]
         prob = predicted_prob[index]
         for i in range(19):
-            label[(prob<thres[i])*(label==i)] = 255  
+            label[(prob<thres[i])*(label==i)] = np.array(255).astype(np.uint8)  
         output = np.asarray(label, dtype=np.uint8)
         output = Image.fromarray(output)
-        name = name.replace('.png', '_labelTrainIds.png')
+        name = name.replace('.jpg', '_labelTrainIds.png')
         save_fn = os.path.join(args.save, name)
         if not os.path.exists(os.path.dirname(save_fn)):
             os.makedirs(os.path.dirname(save_fn), exist_ok=True)
         output.save(save_fn)
+        print('Saved to {}'.format(save_fn))
+        bar.update(1)
+    bar.close()
 
 if __name__ == '__main__':
     main()

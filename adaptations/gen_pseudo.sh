@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 python gen_pseudo_label.py

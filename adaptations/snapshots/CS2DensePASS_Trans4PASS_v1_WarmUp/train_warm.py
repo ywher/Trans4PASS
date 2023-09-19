@@ -21,6 +21,7 @@ from compute_iou import compute_mIoU
 import argparse
 import os
 import os.path as osp
+import datetime
 from PIL import Image
 from torchvision import transforms
 from compute_iou import fast_hist, per_class_iu
@@ -29,6 +30,7 @@ from collections import OrderedDict
 IMG_MEAN = np.array((104.00698793, 116.66876762, 122.67891434), dtype=np.float32)
 
 MODEL = 'Trans4PASS_v1'
+MODEL_VERSION = 'small'
 EMB_CHANS = 128
 BATCH_SIZE = 4
 ITER_SIZE = 1
@@ -49,11 +51,11 @@ LEARNING_RATE = 2.5e-4
 MOMENTUM = 0.9
 NUM_CLASSES = 19
 NUM_STEPS = 10000
-NUM_STEPS_STOP = 8000  # early stopping
+NUM_STEPS_STOP = 10000  # early stopping
 NUM_PROTOTYPE = 50
 POWER = 0.9
 RANDOM_SEED = 1234
-RESTORE_FROM = 'workdirs/cityscapes/trans4pass_tiny_512x512/trans4pass_tiny_512x512.pth'
+RESTORE_FROM = 'workdirs/cityscapes/trans4pass_{}_512x512/trans4pass_{}_512x512.pth'.format(MODEL_VERSION, MODEL_VERSION)
 SAVE_NUM_IMAGES = 2
 SAVE_PRED_EVERY = 1000
 DIR_NAME = '{}2{}_{}_WarmUp/'.format(SOURCE_NAME, TARGET_NAME, MODEL)
@@ -378,7 +380,7 @@ def main():
             os.makedirs(args.log_dir)
         writer = SummaryWriter(args.log_dir)
 
-
+    start_time = time.time()
     # start training
     for i_iter in range(Iter, args.num_steps):
 
@@ -469,8 +471,10 @@ def main():
                 for key, val in scalar_info.items():
                     writer.add_scalar(key, val, i_iter)
         if i_iter % 10 == 0:
-            logging.info('iter = {0:8d}/{1:8d}, loss_seg = {2:.3f}, loss_adv = {3:.3f} loss_D = {4:.3f}'.format(
-                i_iter, args.num_steps, loss_seg_value, loss_adv_target_value, loss_D_value, ))
+            eta_seconds = ((time.time() - start_time) / (i_iter+1)) * (args.num_steps - (i_iter+1))
+            eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
+            logging.info('iter = {0:8d}/{1:8d}, loss_seg = {2:.3f}, loss_adv = {3:.3f} loss_D = {4:.3f} Estimated Time: {5}'.format(
+                i_iter, args.num_steps, loss_seg_value, loss_adv_target_value, loss_D_value, eta_string))
 
         if i_iter >= args.num_steps_stop - 1:
             logging.info('save model ...')

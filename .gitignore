@@ -8,3 +8,5 @@ pretrained
 workdirs
 build/*
 segmentron*
+adaptations/pseudo*
+adaptations/snapshots

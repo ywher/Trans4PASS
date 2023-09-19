@@ -112,6 +112,7 @@ if __name__ == '__main__':
     cfg.check_and_freeze()
 
     default_setup(args)
+    args.distributed = False
 
     evaluator = Evaluator(args)
     evaluator.eval()

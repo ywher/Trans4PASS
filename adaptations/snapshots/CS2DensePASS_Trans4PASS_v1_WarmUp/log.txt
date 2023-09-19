@@ -1,4 +1,4 @@
 INFO: <All keys matched successfully>
 INFO: 
 --- load TEST dataset ---
-INFO: iter =        0/   10000, loss_seg = 0.230, loss_adv = 0.687 loss_D = 0.693
+INFO: iter =        0/   10000, loss_seg = 0.165, loss_adv = 0.695 loss_D = 0.693 Estimated Time: 20:23:16

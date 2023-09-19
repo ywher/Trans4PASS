@@ -13,6 +13,7 @@ import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 import logging, sys
 import time
+import datetime
 from tensorboardX import SummaryWriter
 from model.trans4pass import Trans4PASS_v1, Trans4PASS_v2
 from model.discriminator import FCDiscriminator
@@ -25,7 +26,7 @@ from compute_iou import fast_hist, per_class_iu
 from utils.loss import feat_kl_loss
 
 IMG_MEAN = np.array((104.00698793, 116.66876762, 122.67891434), dtype=np.float32)
-MODEL = 'Trans4PASS_v1'
+MODEL = 'Trans4PASS_v1' # 'Trans4PASS_v1'
 EMB_CHANS = 128
 BATCH_SIZE = 2
 ITER_SIZE = 1
@@ -47,13 +48,14 @@ LEARNING_RATE = 2.5e-6
 MOMENTUM = 0.9
 NUM_CLASSES = 19
 NUM_STEPS = 100000
-NUM_STEPS_STOP = 80000 # early stopping
+NUM_STEPS_STOP = 100000 # early stopping  # 80000
 NUM_PROTOTYPE = 50
 POWER = 0.9
 RANDOM_SEED = 1234
-RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v1_WarmUp/BestCS2DensePASS_G.pth'
+RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v1_WarmUp_old/BestCS2DensePASS_G.pth'
 SAVE_NUM_IMAGES = 2
-SAVE_PRED_EVERY = 100
+SAVE_PRED_EVERY = 200
+LOG_EVERY=50
 DIR_NAME = '{}2{}_{}_MPA/'.format(SOURCE_NAME, TARGET_NAME, MODEL)
 SNAPSHOT_DIR = './snapshots/' + DIR_NAME
 WEIGHT_DECAY = 0.0005
@@ -164,6 +166,8 @@ def get_arguments():
                         help="How many images to save.")
     parser.add_argument("--save-pred-every", type=int, default=SAVE_PRED_EVERY,
                         help="Save summaries and checkpoint every often.")
+    parser.add_argument("--log-every", type=int, default=LOG_EVERY,
+                        help="Print log every often.")
     parser.add_argument("--snapshot-dir", type=str, default=SNAPSHOT_DIR,
                         help="Where to save snapshots of the model.")
     parser.add_argument("--weight-decay", type=float, default=WEIGHT_DECAY,
@@ -244,13 +248,13 @@ def main():
     cudnn.benchmark = True
     cudnn.enabled = True
 
-    w, h = map(int, args.input_size.split(','))
+    w, h = map(int, args.input_size.split(',')) # 1024,512
     input_size = (w, h)
 
-    w, h = map(int, args.input_size_target.split(','))
+    w, h = map(int, args.input_size_target.split(',')) # 2048,400
     input_size_target = (w, h)
 
-    w, h = map(int, INPUT_SIZE_TARGET_TEST.split(','))
+    w, h = map(int, INPUT_SIZE_TARGET_TEST.split(',')) # 2048,400
     input_size_target_test = (w, h)
 
     Iter = 0
@@ -283,8 +287,7 @@ def main():
 
     init_mem_j_path = 'init_memory_joint_ms.npy'
     if not os.path.exists(init_mem_j_path):
-        trainset_temp = densepassDataSet(args.data_dir_target, args.data_list_target, crop_size=input_size_target, set='train',
-                                         ssl_dir=SSL_DIR)
+        trainset_temp = densepassDataSet(args.data_dir_target, args.data_list_target, crop_size=input_size_target, set='train', ssl_dir=SSL_DIR)
         trainloader_temp = data.DataLoader(trainset_temp, batch_size=1, shuffle=False)
         testset_temp = CSSrcDataSet(args.data_dir, args.data_list, crop_size=input_size, set='train')
         testloader_temp = data.DataLoader(testset_temp, batch_size=1, shuffle=False)
@@ -379,6 +382,7 @@ def main():
 
 
     # start training
+    start_time = time.time()
     for i_iter in range(Iter, args.num_steps):
 
         loss_seg_value = 0
@@ -491,11 +495,14 @@ def main():
             if i_iter % 10 == 0:
                 for key, val in scalar_info.items():
                     writer.add_scalar(key, val, i_iter)
-        if i_iter % 10 == 0:
-            logging.info('iter={0:8d}/{1:8d}, l_seg={2:.3f}, l_seg_t={7:.3f}, l_adv={3:.3f} l_D={4:.3f}, l_kl_s={5:.3f}, l_kl_t={6:.3f}'.format(
-                  i_iter, args.num_steps, loss_seg_value, loss_adv_target_value, loss_D_value, loss_kl_s_value, loss_kl_t_value, loss_seg_value_t))
+        if i_iter % args.log_every == 0:
+            eta_time = (time.time() - start_time) / (i_iter + 1) * (args.num_steps - i_iter)
+            eta_str = str(datetime.timedelta(seconds=int(eta_time)))
+            # print('eta: {}'.format(eta_str))
+            logging.info('iter={0:6d}/{1:6d}, l_seg={2:.3f}, l_seg_t={7:.3f}, l_adv={3:.3f} l_D={4:.3f}, l_kl_s={5:.3f}, l_kl_t={6:.3f}, eta={8}'.format(
+                  i_iter, args.num_steps, loss_seg_value, loss_adv_target_value, loss_D_value, loss_kl_s_value, loss_kl_t_value, loss_seg_value_t, eta_str))
 
-        if i_iter >= args.num_steps_stop - 1:
+        if i_iter >= args.num_steps_stop - 1:  #early stop
             logging.info('save model ...')
             torch.save(model.state_dict(), osp.join(args.snapshot_dir, 'CS_' + str(args.num_steps_stop) + '.pth'))
             torch.save(model_D.state_dict(), osp.join(args.snapshot_dir, 'CS_' + str(args.num_steps_stop) + '_D.pth'))
