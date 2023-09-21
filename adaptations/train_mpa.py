@@ -26,7 +26,7 @@ from compute_iou import fast_hist, per_class_iu
 from utils.loss import feat_kl_loss
 
 IMG_MEAN = np.array((104.00698793, 116.66876762, 122.67891434), dtype=np.float32)
-MODEL = 'Trans4PASS_v1' # 'Trans4PASS_v1'
+MODEL = 'Trans4PASS_v2' # 'Trans4PASS_v1'
 EMB_CHANS = 128
 BATCH_SIZE = 2
 ITER_SIZE = 1
@@ -52,11 +52,13 @@ NUM_STEPS_STOP = 100000 # early stopping  # 80000
 NUM_PROTOTYPE = 50
 POWER = 0.9
 RANDOM_SEED = 1234
-RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v1_WarmUp_old/BestCS2DensePASS_G.pth'
+# RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v2_WarmUp/BestCS2DensePASS_13000iter_53.55miou.pth'
+RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v2_SSL/BestCS2DensePASS_97400iter_55.28miou.pth'
+# RESTORE_FROM = 'snapshots/CS2DensePASS_Trans4PASS_v1_WarmUp_old/BestCS2DensePASS_G.pth'
 SAVE_NUM_IMAGES = 2
 SAVE_PRED_EVERY = 200
 LOG_EVERY=50
-DIR_NAME = '{}2{}_{}_MPA/'.format(SOURCE_NAME, TARGET_NAME, MODEL)
+DIR_NAME = '{}2{}_{}_MPA_v2/'.format(SOURCE_NAME, TARGET_NAME, MODEL)
 SNAPSHOT_DIR = './snapshots/' + DIR_NAME
 WEIGHT_DECAY = 0.0005
 # LOG_DIR = './log'
