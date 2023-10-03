@@ -10,3 +10,6 @@ build/*
 segmentron*
 adaptations/pseudo*
 adaptations/snapshots
+adaptations/*.sh
+train.sh
+test.sh
