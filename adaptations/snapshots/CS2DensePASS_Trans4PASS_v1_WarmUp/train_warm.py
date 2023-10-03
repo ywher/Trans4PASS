@@ -30,9 +30,9 @@ from collections import OrderedDict
 IMG_MEAN = np.array((104.00698793, 116.66876762, 122.67891434), dtype=np.float32)
 
 MODEL = 'Trans4PASS_v1'
-MODEL_VERSION = 'small'
+MODEL_VERSION = 'tiny'
 EMB_CHANS = 128
-BATCH_SIZE = 4
+BATCH_SIZE = 4 #4
 ITER_SIZE = 1
 NUM_WORKERS = BATCH_SIZE * 2
 SOURCE_NAME = 'CS'
@@ -47,15 +47,15 @@ DATA_LIST_PATH_TARGET_TEST = 'dataset/densepass_list/val.txt'
 INPUT_SIZE_TARGET = '2048,400'
 TARGET_TRANSFORM = 'FixScaleRandomCropWH' 
 INPUT_SIZE_TARGET_TEST = '2048,400'
-LEARNING_RATE = 2.5e-4
+LEARNING_RATE = 2.5e-4 #2.5
 MOMENTUM = 0.9
 NUM_CLASSES = 19
-NUM_STEPS = 10000
-NUM_STEPS_STOP = 10000  # early stopping
+NUM_STEPS = 10000 #10000
+NUM_STEPS_STOP = 10000  # early stopping 8000
 NUM_PROTOTYPE = 50
 POWER = 0.9
 RANDOM_SEED = 1234
-RESTORE_FROM = 'workdirs/cityscapes/trans4pass_{}_512x512/trans4pass_{}_512x512.pth'.format(MODEL_VERSION, MODEL_VERSION)
+RESTORE_FROM = 'workdirs/cityscapes/trans4pass_plus_{}_512x512/trans4pass_{}_512x512.pth'.format(MODEL_VERSION, MODEL_VERSION)
 SAVE_NUM_IMAGES = 2
 SAVE_PRED_EVERY = 1000
 DIR_NAME = '{}2{}_{}_WarmUp/'.format(SOURCE_NAME, TARGET_NAME, MODEL)

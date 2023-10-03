@@ -2,7 +2,7 @@
 # python tools/eval_dp.py --config-file configs/cityscapes/trans4pass_tiny_512x512.yaml
 
 # python tools/eval_dp.py --config-file configs/cityscapes/trans4pass_small_512x512.yaml
-python tools/eval_dp.py 
+python tools/eval_dp_ms.py  --config-file configs/cityscapes/trans4pass_small_512x512.yaml
 # python tools/eval_s2d3d.py --config-file configs/stanford2d3d/trans4pass_tiny_1080x1080.yaml
 
 

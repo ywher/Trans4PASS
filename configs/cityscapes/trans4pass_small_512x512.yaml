@@ -13,7 +13,8 @@ TRAIN:
     APEX: False
 TEST:
     BATCH_SIZE: 1
-    TEST_MODEL_PATH: "workdirs/cityscapes/trans4pass_small_512x512/trans4pass_small_512x512.pth"
+    # TEST_MODEL_PATH: "workdirs/cityscapes/trans4pass_small_512x512/trans4pass_small_512x512.pth"
+    TEST_MODEL_PATH: "adaptations/snapshots/CS2DensePASS_Trans4PASS_v2_MPA/BestCS2DensePASS_55400iter_55.3miou.pth"
     CROP_SIZE: (512, 512)
 
 SOLVER:
